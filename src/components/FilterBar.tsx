@@ -1,5 +1,5 @@
 import { Search, Sparkles, Shuffle, FlaskConical } from 'lucide-react';
-import { useStore, type FeedMode } from '@/store/useStore';
+import { useStore, keywordWeight, type FeedMode } from '@/store/useStore';
 import { useState, useRef, useEffect } from 'react';
 
 const MODES: { id: FeedMode; label: string; icon: typeof Sparkles }[] = [
@@ -49,6 +49,7 @@ export function FilterBar() {
 
   // Get top keywords for display
   const topKeywords = Object.entries(keywordProfile)
+    .map(([k, stats]) => [k, keywordWeight(stats)] as const)
     .filter(([, v]) => v > 0)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)

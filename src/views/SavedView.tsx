@@ -1,5 +1,5 @@
 import { Bookmark, RotateCcw } from 'lucide-react';
-import { useStore } from '@/store/useStore';
+import { useStore, keywordWeight } from '@/store/useStore';
 import { CompactCard } from '@/components/CompactCard';
 import { EmptyState } from '@/components/EmptyState';
 import { KeywordScores } from '@/components/KeywordScores';
@@ -11,6 +11,10 @@ export function SavedView() {
   const savedPapers = paperQueue.filter((p) => savedIds.includes(p.id));
 
   const savedCount = savedIds.length;
+
+  const scoredProfile: Record<string, number> = Object.fromEntries(
+    Object.entries(keywordProfile).map(([k, stats]) => [k, keywordWeight(stats)])
+  );
 
   return (
     <div className="h-full flex flex-col">
@@ -27,7 +31,7 @@ export function SavedView() {
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto mt-[60px] mb-14 px-4 pt-4">
         {/* Keyword Taste Profile */}
-        <KeywordScores profile={keywordProfile} />
+        <KeywordScores profile={scoredProfile} />
 
         {/* Saved Paper Cards */}
         {savedPapers.length > 0 ? (
