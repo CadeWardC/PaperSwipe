@@ -30,6 +30,7 @@ export function useCardSwipe({ paperId, onSwipeLeft, onSwipeRight, onTap }: UseC
   const currentX = useRef(0);
   const currentY = useRef(0);
   const isDragging = useRef(false);
+  const isPressed = useRef(false);
   const hasSwiped = useRef(false);
   const velocityX = useRef(0);
   const lastX = useRef(0);
@@ -45,6 +46,7 @@ export function useCardSwipe({ paperId, onSwipeLeft, onSwipeRight, onTap }: UseC
   useEffect(() => {
     hasSwiped.current = false;
     isDragging.current = false;
+    isPressed.current = false;
     velocityX.current = 0;
     currentX.current = 0;
     currentY.current = 0;
@@ -96,6 +98,7 @@ export function useCardSwipe({ paperId, onSwipeLeft, onSwipeRight, onTap }: UseC
     if (!card) return;
 
     card.setPointerCapture(e.pointerId);
+    isPressed.current = true;
     startX.current = e.clientX;
     startY.current = e.clientY;
     startTime.current = performance.now();
@@ -109,6 +112,7 @@ export function useCardSwipe({ paperId, onSwipeLeft, onSwipeRight, onTap }: UseC
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (hasSwiped.current) return;
+    if (!isPressed.current || e.buttons === 0) return;
 
     const dx = e.clientX - startX.current;
     const dy = e.clientY - startY.current;
@@ -145,6 +149,7 @@ export function useCardSwipe({ paperId, onSwipeLeft, onSwipeRight, onTap }: UseC
     const card = cardRef.current;
     if (!card) return;
     card.releasePointerCapture(e.pointerId);
+    isPressed.current = false;
 
     const dx = e.clientX - startX.current;
     const elapsed = performance.now() - startTime.current;
@@ -169,11 +174,18 @@ export function useCardSwipe({ paperId, onSwipeLeft, onSwipeRight, onTap }: UseC
     }
   }, [onTap, flyOff, snapBack]);
 
+  const handlePointerCancel = useCallback(() => {
+    if (hasSwiped.current) return;
+    isPressed.current = false;
+    snapBack();
+  }, [snapBack]);
+
   return {
     cardRef,
     swipeState,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    handlePointerCancel,
   };
 }

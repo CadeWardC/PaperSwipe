@@ -34,13 +34,19 @@ export function SwipeCard({ paper, stackIndex, onComplete }: SwipeCardProps) {
     setDetailPaper(paper);
   };
 
-  const { cardRef, swipeState, handlePointerDown, handlePointerMove, handlePointerUp } =
-    useCardSwipe({
-      paperId: paper.id,
-      onSwipeLeft: handleSwipeLeft,
-      onSwipeRight: handleSwipeRight,
-      onTap: handleTap,
-    });
+  const {
+    cardRef,
+    swipeState,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerCancel,
+  } = useCardSwipe({
+    paperId: paper.id,
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    onTap: handleTap,
+  });
 
   // Stack positioning
   const isActive = stackIndex === 0;
@@ -83,6 +89,7 @@ export function SwipeCard({ paper, stackIndex, onComplete }: SwipeCardProps) {
       onPointerDown={isActive ? handlePointerDown : undefined}
       onPointerMove={isActive ? handlePointerMove : undefined}
       onPointerUp={isActive ? handlePointerUp : undefined}
+      onPointerCancel={isActive ? handlePointerCancel : undefined}
     >
       {/* Swipe indicators */}
       {isActive && (
