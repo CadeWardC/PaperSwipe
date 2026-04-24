@@ -52,6 +52,10 @@ interface AppState {
   feedMode: FeedMode;
   setFeedMode: (mode: FeedMode) => void;
 
+  // Foundation mode — bias toward older, foundational papers for new users
+  foundationMode: boolean;
+  setFoundationMode: (v: boolean) => void;
+
   // Search
   searchQuery: string;
   setSearchQuery: (q: string) => void;
@@ -99,6 +103,7 @@ interface AppState {
   // Reset
   resetQueue: () => void;
   resetScores: () => void;
+  resetAll: () => void;
 }
 
 const STORAGE_KEY_SAVED = 'paperswipe-saved-ids';
@@ -106,6 +111,7 @@ const STORAGE_KEY_PROFILE = 'paperswipe-keyword-profile';
 const STORAGE_KEY_INTERACTIONS = 'paperswipe-interactions';
 const STORAGE_KEY_ONBOARDED = 'paperswipe-onboarded';
 const STORAGE_KEY_INITIAL_KW = 'paperswipe-initial-keywords';
+const STORAGE_KEY_FOUNDATION = 'paperswipe-foundation-mode';
 
 function loadJson<T>(key: string, fallback: T): T {
   try {
@@ -151,6 +157,13 @@ export const useStore = create<AppState>((set, get) => ({
   // Feed mode
   feedMode: 'foryou' as FeedMode,
   setFeedMode: (mode) => set({ feedMode: mode, currentIndex: 0 }),
+
+  // Foundation mode
+  foundationMode: loadJson<boolean>(STORAGE_KEY_FOUNDATION, true),
+  setFoundationMode: (v) => {
+    saveJson(STORAGE_KEY_FOUNDATION, v);
+    set({ foundationMode: v });
+  },
 
   // Search
   searchQuery: '',
@@ -291,6 +304,26 @@ export const useStore = create<AppState>((set, get) => ({
     set({
       keywordProfile: {},
       interactions: [],
+    });
+  },
+
+  // Full reset — wipes everything and returns to onboarding
+  resetAll: () => {
+    saveJson(STORAGE_KEY_SAVED, []);
+    saveJson(STORAGE_KEY_PROFILE, {});
+    saveJson(STORAGE_KEY_INTERACTIONS, []);
+    saveJson(STORAGE_KEY_ONBOARDED, false);
+    saveJson(STORAGE_KEY_INITIAL_KW, []);
+    saveJson(STORAGE_KEY_FOUNDATION, true);
+    set({
+      paperQueue: [],
+      currentIndex: 0,
+      keywordProfile: {},
+      interactions: [],
+      savedIds: [],
+      hasOnboarded: false,
+      initialKeywords: [],
+      foundationMode: true,
     });
   },
 }));

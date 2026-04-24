@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { Bookmark, RotateCcw, Settings, RotateCw, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { Bookmark, RotateCcw, Settings, RotateCw, ChevronLeft, AlertTriangle, Trash2, GraduationCap } from 'lucide-react';
 import { useStore, keywordWeight } from '@/store/useStore';
 import { CompactCard } from '@/components/CompactCard';
 import { EmptyState } from '@/components/EmptyState';
 import { KeywordScores } from '@/components/KeywordScores';
 
 export function SavedView() {
-  const { savedIds, keywordProfile, paperQueue, setCurrentView, resetScores, showToast } =
-    useStore();
+  const {
+    savedIds, keywordProfile, paperQueue, setCurrentView,
+    resetScores, resetAll, showToast,
+    foundationMode, setFoundationMode,
+    setPaperQueue, setCurrentIndex,
+  } = useStore();
   const [showSettings, setShowSettings] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmResetAll, setConfirmResetAll] = useState(false);
 
   // Get saved papers from the queue
   const savedPapers = paperQueue.filter((p) => savedIds.includes(p.id));
@@ -25,6 +30,10 @@ export function SavedView() {
     setConfirmReset(false);
     setShowSettings(false);
     showToast('Taste profile reset');
+  };
+
+  const handleResetAll = () => {
+    resetAll();
   };
 
   return (
@@ -77,6 +86,85 @@ export function SavedView() {
         {showSettings ? (
           /* ─── Settings Panel ─── */
           <div className="max-w-[480px] mx-auto space-y-3">
+            {/* Foundation Mode */}
+            <div className="bg-white rounded-[16px] shadow-card-stacked overflow-hidden">
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-sage/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <GraduationCap className="w-4 h-4 text-sage" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-[14px] font-semibold text-charcoal mb-0.5">
+                        Foundation Mode
+                      </h3>
+                      {/* Toggle switch */}
+                      <button
+                        onClick={() => {
+                          setFoundationMode(!foundationMode);
+                          setPaperQueue([]);
+                          setCurrentIndex(0);
+                          showToast(foundationMode ? 'Foundation mode off' : 'Foundation mode on');
+                        }}
+                        className="relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0"
+                        style={{
+                          backgroundColor: foundationMode ? '#2E5236' : '#D0D0CE',
+                        }}
+                      >
+                        <div
+                          className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200"
+                          style={{
+                            transform: foundationMode ? 'translateX(22px)' : 'translateX(2px)',
+                          }}
+                        />
+                      </button>
+                    </div>
+                    <p className="text-[12px] text-midgrey leading-relaxed pr-2">
+                      Show older, highly-cited foundational papers first. As you save more papers, newer research is gradually mixed in.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress indicator */}
+                {foundationMode && (
+                  <div className="mt-3 p-3 rounded-xl bg-offwhite" style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-medium text-midgrey">Feed Composition</span>
+                      <span className="text-[11px] text-midgrey">
+                        {savedCount} / 30 papers to full transition
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-white overflow-hidden flex">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.max(5, Math.round(Math.max(0, 1 - savedCount / 30) * 100))}%`,
+                          background: 'linear-gradient(90deg, #2E5236, #4a7c54)',
+                        }}
+                      />
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(95, Math.round(Math.min(1, savedCount / 30) * 100))}%`,
+                          background: 'linear-gradient(90deg, #6B9BD2, #2E5C8A)',
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-sage" />
+                        <span className="text-[10px] text-midgrey">Foundational</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full" style={{ background: '#2E5C8A' }} />
+                        <span className="text-[10px] text-midgrey">Recent</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Reset Taste Profile */}
             <div className="bg-white rounded-[16px] shadow-card-stacked overflow-hidden">
               <div className="p-4">
@@ -159,6 +247,65 @@ export function SavedView() {
                 </div>
               </div>
             )}
+
+            {/* Total Reset */}
+            <div className="bg-white rounded-[16px] shadow-card-stacked overflow-hidden">
+              <div className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Trash2 className="w-4 h-4 text-red-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-[14px] font-semibold text-charcoal mb-0.5">
+                      Total Reset
+                    </h3>
+                    <p className="text-[12px] text-midgrey leading-relaxed">
+                      Erase everything — saved papers, taste profile, and preferences. You'll be taken back to the keyword selection screen.
+                    </p>
+                  </div>
+                </div>
+
+                {!confirmResetAll ? (
+                  <button
+                    onClick={() => setConfirmResetAll(true)}
+                    className="w-full mt-3 h-10 rounded-xl border border-red-500/20 text-[13px] font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Reset Everything
+                  </button>
+                ) : (
+                  <div
+                    className="mt-3 p-3 rounded-xl border border-red-500/20 bg-red-50/50"
+                    style={{
+                      animation: 'fadeSlideIn 0.2s ease-out',
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                      <span className="text-[12px] font-semibold text-red-600">
+                        This cannot be undone
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-midgrey mb-3 leading-relaxed">
+                      All saved papers, keyword scores, and your topic selections will be permanently deleted.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setConfirmResetAll(false)}
+                        className="flex-1 h-9 rounded-lg bg-offwhite text-[12px] font-semibold text-charcoal hover:bg-gray-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleResetAll}
+                        className="flex-1 h-9 rounded-lg bg-red-600 text-[12px] font-semibold text-white hover:bg-red-700 transition-colors"
+                      >
+                        Yes, Erase All
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         ) : (
           /* ─── Normal Saved View ─── */

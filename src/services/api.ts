@@ -117,13 +117,28 @@ function transformEpmcPaper(raw: EpmcResult, forceSource?: 'pubmed' | 'biorxiv')
 
 // ─── API Calls ───
 
+export interface FetchOptions {
+  /** When true, bias toward older foundational papers (pre-2020, sorted by citations) */
+  foundation?: boolean;
+}
+
 export async function fetchPubmedPapers(
   query: string,
-  page: number = 1
+  page: number = 1,
+  options: FetchOptions = {}
 ): Promise<Paper[]> {
   const pageSize = 25;
   const start = (page - 1) * pageSize;
-  const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}&pageSize=${pageSize}&resultType=core&format=json&cursorMark=${start}`;
+
+  // Foundation mode: add date filter and sort by citation count
+  let fullQuery = query;
+  let sort = '';
+  if (options.foundation) {
+    fullQuery = `(${query}) AND (FIRST_PDATE:[2000-01-01 TO 2020-12-31])`;
+    sort = '&sort=CITED desc';
+  }
+
+  const url = `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(fullQuery)}&pageSize=${pageSize}&resultType=core&format=json&cursorMark=${start}${sort}`;
 
   const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`Europe PMC error: ${res.status}`);

@@ -107,6 +107,8 @@ export function usePaperEngine() {
     keywordProfile,
     interactions,
     initialKeywords,
+    foundationMode,
+    savedIds,
     setPaperQueue,
     appendToQueue,
     setIsLoading,
@@ -117,6 +119,7 @@ export function usePaperEngine() {
 
   const pubmedPageRef = useRef(1);
   const biorxivPageRef = useRef(1);
+  const foundationPageRef = useRef(1);
   const isFetchingRef = useRef(false);
 
   const remainingQueue = paperQueue.slice(currentIndex);
@@ -173,9 +176,37 @@ export function usePaperEngine() {
 
           const pubmedPapers = await fetchPubmedPapers(query, pubmedPageRef.current);
           pubmedPageRef.current++;
-          allPapers.push(...pubmedPapers);
 
-          // Mix in ~30% bioRxiv preprints
+          // Foundation mode: mix in older foundational papers for new users
+          const savedCount = useStore.getState().savedIds.length;
+          if (foundationMode && savedCount < 30) {
+            // Ratio: 100% foundational at 0 saves → 0% at 30 saves
+            const foundationRatio = Math.max(0, 1 - savedCount / 30);
+            try {
+              const foundationalPapers = await fetchPubmedPapers(
+                query,
+                foundationPageRef.current,
+                { foundation: true }
+              );
+              foundationPageRef.current++;
+
+              const foundationalCount = Math.round(pubmedPapers.length * foundationRatio);
+              const recentCount = pubmedPapers.length - foundationalCount;
+
+              // Take foundational papers first, then fill with recent
+              allPapers.push(
+                ...foundationalPapers.slice(0, foundationalCount),
+                ...pubmedPapers.slice(0, recentCount)
+              );
+            } catch {
+              // Fallback to just recent papers if foundation fetch fails
+              allPapers.push(...pubmedPapers);
+            }
+          } else {
+            allPapers.push(...pubmedPapers);
+          }
+
+          // Mix in ~30% bioRxiv preprints (skip if foundation mode is dominant)
           try {
             const biorxivPapers = await fetchBiorxivPapers(biorxivPageRef.current);
             biorxivPageRef.current++;
@@ -192,7 +223,7 @@ export function usePaperEngine() {
 
       return allPapers;
     },
-    [feedMode, searchQuery, keywordProfile, initialKeywords]
+    [feedMode, searchQuery, keywordProfile, initialKeywords, foundationMode, savedIds.length]
   );
 
   // ─── Score and mix ───
@@ -258,6 +289,7 @@ export function usePaperEngine() {
   useEffect(() => {
     pubmedPageRef.current = 1;
     biorxivPageRef.current = 1;
+    foundationPageRef.current = 1;
   }, [feedMode]);
 
   const currentPaper = paperQueue[currentIndex] || null;
