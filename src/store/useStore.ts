@@ -98,6 +98,7 @@ interface AppState {
 
   // Reset
   resetQueue: () => void;
+  resetScores: () => void;
 }
 
 const STORAGE_KEY_SAVED = 'paperswipe-saved-ids';
@@ -282,4 +283,14 @@ export const useStore = create<AppState>((set, get) => ({
       interactions: [],
       savedIds: [],
     }),
+
+  // Reset only keyword scores / taste profile
+  resetScores: () => {
+    saveJson(STORAGE_KEY_PROFILE, {});
+    saveJson(STORAGE_KEY_INTERACTIONS, []);
+    set({
+      keywordProfile: {},
+      interactions: [],
+    });
+  },
 }));
