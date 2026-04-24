@@ -106,6 +106,7 @@ export function usePaperEngine() {
     searchQuery,
     keywordProfile,
     interactions,
+    initialKeywords,
     setPaperQueue,
     appendToQueue,
     setIsLoading,
@@ -146,8 +147,13 @@ export function usePaperEngine() {
           if (searchQuery.trim()) {
             query = searchQuery.trim();
           } else if (isInitial) {
-            const randomKws = getRandomKeywords(3);
-            query = buildQueryFromKeywords(randomKws);
+            // Use onboarding keywords if available, otherwise random
+            if (initialKeywords.length > 0) {
+              query = buildQueryFromKeywords(initialKeywords.slice(0, 5));
+            } else {
+              const randomKws = getRandomKeywords(3);
+              query = buildQueryFromKeywords(randomKws);
+            }
           } else {
             const now = Date.now();
             const topKws = Object.entries(keywordProfile)
@@ -186,7 +192,7 @@ export function usePaperEngine() {
 
       return allPapers;
     },
-    [feedMode, searchQuery, keywordProfile]
+    [feedMode, searchQuery, keywordProfile, initialKeywords]
   );
 
   // ─── Score and mix ───

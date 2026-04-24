@@ -43,6 +43,11 @@ interface AppState {
   currentView: 'discover' | 'saved';
   setCurrentView: (view: 'discover' | 'saved') => void;
 
+  // Onboarding
+  hasOnboarded: boolean;
+  initialKeywords: string[];
+  completeOnboarding: (keywords: string[]) => void;
+
   // Feed mode
   feedMode: FeedMode;
   setFeedMode: (mode: FeedMode) => void;
@@ -98,6 +103,8 @@ interface AppState {
 const STORAGE_KEY_SAVED = 'paperswipe-saved-ids';
 const STORAGE_KEY_PROFILE = 'paperswipe-keyword-profile';
 const STORAGE_KEY_INTERACTIONS = 'paperswipe-interactions';
+const STORAGE_KEY_ONBOARDED = 'paperswipe-onboarded';
+const STORAGE_KEY_INITIAL_KW = 'paperswipe-initial-keywords';
 
 function loadJson<T>(key: string, fallback: T): T {
   try {
@@ -130,6 +137,15 @@ export const useStore = create<AppState>((set, get) => ({
   // Navigation
   currentView: 'discover',
   setCurrentView: (view) => set({ currentView: view }),
+
+  // Onboarding
+  hasOnboarded: loadJson<boolean>(STORAGE_KEY_ONBOARDED, false),
+  initialKeywords: loadJson<string[]>(STORAGE_KEY_INITIAL_KW, []),
+  completeOnboarding: (keywords) => {
+    saveJson(STORAGE_KEY_ONBOARDED, true);
+    saveJson(STORAGE_KEY_INITIAL_KW, keywords);
+    set({ hasOnboarded: true, initialKeywords: keywords });
+  },
 
   // Feed mode
   feedMode: 'foryou' as FeedMode,

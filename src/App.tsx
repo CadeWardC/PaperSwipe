@@ -4,9 +4,21 @@ import { Toast } from '@/components/Toast';
 import { DetailSheet } from '@/components/DetailSheet';
 import { SwipeView } from '@/views/SwipeView';
 import { SavedView } from '@/views/SavedView';
+import { KeywordOnboarding } from '@/components/KeywordOnboarding';
 
 function App() {
-  const { currentView } = useStore();
+  const { currentView, hasOnboarded, completeOnboarding, setPaperQueue, setCurrentIndex } = useStore();
+
+  const handleOnboardingComplete = (keywords: string[]) => {
+    completeOnboarding(keywords);
+    // Clear queue to trigger fresh fetch with the user's keywords
+    setPaperQueue([]);
+    setCurrentIndex(0);
+  };
+
+  if (!hasOnboarded) {
+    return <KeywordOnboarding onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <div className="h-screen w-screen bg-offwhite overflow-hidden">
